@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Conexão</title>
+
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  background:#050505;
+  color:white;
+  font-family:Arial,sans-serif;
+  padding:30px;
+}
+
+h1{
+  text-align:center;
+  font-size:48px;
+  margin-bottom:10px;
+
+  background:linear-gradient(90deg,#00aaff,#cc00ff);
+
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+  text-align:center;
+  color:#999;
+  margin-bottom:40px;
+}
+
+.top-actions{
+  text-align:center;
+  margin-bottom:30px;
+}
+
+.container{
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  justify-content:center;
+}
+
+.card{
+  width:380px;
+  background:#0d0d0d;
+  border:1px solid #1f1f1f;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 0 15px rgba(255,255,255,.05);
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px;
+  border-bottom:1px solid #1f1f1f;
+}
+
+.block-title{
+  width:180px;
+  background:#121212;
+  border:1px solid #222;
+  color:white;
+  padding:8px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+.badge{
+  background:#1b1b1b;
+  padding:5px 10px;
+  border-radius:12px;
+  font-size:12px;
+  color:#aaa;
+}
+
+.table-wrap{
+  max-height:420px;
+  overflow-y:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th{
+  padding:12px;
+  text-align:left;
+  font-size:12px;
+  color:#777;
+  border-bottom:1px solid #1f1f1f;
+}
+
+td{
+  padding:10px;
+  border-bottom:1px solid #161616;
+}
+
+input{
+  width:100%;
+  background:#121212;
+  border:1px solid #222;
+  color:white;
+  padding:8px;
+  border-radius:8px;
+  outline:none;
+}
+
+select{
+  width:100%;
+  padding:8px;
+  border:none;
+  border-radius:20px;
+  font-weight:bold;
+  color:white;
+  cursor:pointer;
+}
+
+.on{
+  background:#0f8b4c;
+}
+
+.off{
+  background:#a61d24;
+}
+
+button{
+  background:#1f1f1f;
+  border:none;
+  color:white;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#333;
+}
+
+.delete-btn{
+  background:#a61d24;
+}
+
+.delete-btn:hover{
+  background:#c62828;
+}
+
+.add-block-btn{
+  background:#0066ff;
+}
+
+.add-block-btn:hover{
+  background:#0052cc;
+}
+
+.actions{
+  padding:15px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Controle de Conexão</h1>
+
+<p class="subtitle">
+Monitoramento de Números e Status dos Estagiários
+</p>
+
+<div class="top-actions">
+
+<button class="add-block-btn" onclick="addBlock()">
++ Adicionar Bloco
+</button>
+
+</div>
+
+<div class="container" id="dashboard"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD9WYWXrzwgVAJV1XX-qLUZhgd2Iq0sn_s",
+  authDomain: "mkt3-26e08.firebaseapp.com",
+  projectId: "mkt3-26e08",
+  storageBucket: "mkt3-26e08.firebasestorage.app",
+  messagingSenderId: "783524116318",
+  appId: "1:783524116318:web:d0e3ac1b8d75e28f4e81cf",
+  measurementId: "G-BLXGS175QR"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const dashboardRef = doc(db,"controle","dashboard");
+
+let data = [
+
+{
+  name:"Geral",
+  rows:[
+    {
+      numero:"1964",
+      status:"ON",
+      observacao:"enviar 4"
+    },
+    {
+      numero:"2515",
+      status:"OFF",
+      observacao:"caiu com 4 envios"
+    }
+  ]
+},
+
+{
+  name:"Equipe Manhã",
+  rows:[
+    {
+      numero:"7979",
+      status:"ON",
+      observacao:"ativo"
+    }
+  ]
+}
+
+];
+
+async function saveData(){
+
+  await setDoc(dashboardRef,{
+    cards:data
+  });
+
+}
+
+function render(){
+
+  const dashboard = document.getElementById("dashboard");
+
+  dashboard.innerHTML = "";
+
+  data.forEach((card,cardIndex)=>{
+
+    const totalON = card.rows.filter(r => r.status === "ON").length;
+
+    const div = document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML = `
+
+    <div class="header">
+
+      <input
+        class="block-title"
+        value="${card.name}"
+        oninput="changeBlockName(${cardIndex},this.value)"
+      >
+
+      <div class="badge">
+        ${totalON} ON / ${card.rows.length} TOTAL
+      </div>
+
+    </div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>NÚMERO</th>
+            <th>STATUS</th>
+            <th>OBS</th>
+            <th>AÇÃO</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          ${card.rows.map((row,rowIndex)=>`
+
+          <tr>
+
+            <td>
+
+              <input
+                value="${row.numero}"
+                oninput="updateField(${cardIndex},${rowIndex},'numero',this.value)"
+              >
+
+            </td>
+
+            <td>
+
+              <select
+                class="${row.status === 'ON' ? 'on' : 'off'}"
+                onchange="changeStatus(this,${cardIndex},${rowIndex})"
+              >
+
+                <option value="ON"
+                ${row.status === 'ON' ? 'selected' : ''}>
+                ON
+                </option>
+
+                <option value="OFF"
+                ${row.status === 'OFF' ? 'selected' : ''}>
+                OFF
+                </option>
+
+              </select>
+
+            </td>
+
+            <td>
+
+              <input
+                value="${row.observacao}"
+                oninput="updateField(${cardIndex},${rowIndex},'observacao',this.value)"
+              >
+
+            </td>
+
+            <td>
+
+              <button
+                class="delete-btn"
+                onclick="removeRow(${cardIndex},${rowIndex})"
+              >
+              X
+              </button>
+
+            </td>
+
+          </tr>
+
+          `).join("")}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <div class="actions">
+
+      <button onclick="addRow(${cardIndex})">
+      + Linha
+      </button>
+
+      <button
+      class="delete-btn"
+      onclick="removeBlock(${cardIndex})"
+      >
+      Excluir
+      </button>
+
+    </div>
+
+    `;
+
+    dashboard.appendChild(div);
+
+  });
+
+}
+
+window.updateField = function(card,row,field,value){
+
+  data[card].rows[row][field] = value;
+
+  clearTimeout(window.saveTimer);
+
+  window.saveTimer = setTimeout(()=>{
+    saveData();
+  },500);
+
+}
+
+window.changeStatus = function(el,card,row){
+
+  const value = el.value;
+
+  data[card].rows[row].status = value;
+
+  if(value === "ON"){
+    el.className = "on";
+  }else{
+    el.className = "off";
+  }
+
+  render();
+
+  saveData();
+
+}
+
+window.changeBlockName = function(card,value){
+
+  data[card].name = value;
+
+  clearTimeout(window.blockTimer);
+
+  window.blockTimer = setTimeout(()=>{
+    saveData();
+  },500);
+
+}
+
+window.addRow = function(card){
+
+  data[card].rows.push({
+    numero:"",
+    status:"ON",
+    observacao:""
+  });
+
+  render();
+
+  saveData();
+
+}
+
+window.removeRow = function(card,row){
+
+  data[card].rows.splice(row,1);
+
+  render();
+
+  saveData();
+
+}
+
+window.addBlock = function(){
+
+  data.push({
+
+    name:"Novo Bloco",
+
+    rows:[
+      {
+        numero:"",
+        status:"ON",
+        observacao:""
+      }
+    ]
+
+  });
+
+  render();
+
+  saveData();
+
+}
+
+window.removeBlock = function(card){
+
+  data.splice(card,1);
+
+  render();
+
+  saveData();
+
+}
+
+onSnapshot(dashboardRef,(snapshot)=>{
+
+  if(snapshot.exists()){
+
+    const firebaseData = snapshot.data();
+
+    data = firebaseData.cards || [];
+
+    render();
+
+  }else{
+
+    saveData();
+
+    render();
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
