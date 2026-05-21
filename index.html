@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Controle de Conexão</title>
 
 <style>
@@ -22,7 +23,7 @@ body{
 
 h1{
   text-align:center;
-  font-size:48px;
+  font-size:46px;
   margin-bottom:10px;
 
   background:linear-gradient(90deg,#00aaff,#cc00ff);
@@ -34,28 +35,65 @@ h1{
 .subtitle{
   text-align:center;
   color:#999;
-  margin-bottom:40px;
+  margin-bottom:30px;
 }
 
-.top-actions{
-  text-align:center;
+.top{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
   margin-bottom:30px;
+}
+
+input{
+  background:#121212;
+  border:1px solid #222;
+  color:white;
+  padding:10px;
+  border-radius:10px;
+  outline:none;
+}
+
+button{
+  background:#1f1f1f;
+  border:none;
+  color:white;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#333;
+}
+
+.add-btn{
+  background:#0066ff;
+}
+
+.delete-btn{
+  background:#a61d24;
+}
+
+.unlock-btn{
+  background:#0f8b4c;
 }
 
 .container{
   display:flex;
   flex-wrap:wrap;
-  gap:20px;
   justify-content:center;
+  gap:20px;
 }
 
 .card{
-  width:380px;
+  width:390px;
   background:#0d0d0d;
   border:1px solid #1f1f1f;
   border-radius:20px;
   overflow:hidden;
-  box-shadow:0 0 15px rgba(255,255,255,.05);
 }
 
 .header{
@@ -68,11 +106,6 @@ h1{
 
 .block-title{
   width:180px;
-  background:#121212;
-  border:1px solid #222;
-  color:white;
-  padding:8px;
-  border-radius:8px;
   font-weight:bold;
 }
 
@@ -107,24 +140,13 @@ td{
   border-bottom:1px solid #161616;
 }
 
-input{
-  width:100%;
-  background:#121212;
-  border:1px solid #222;
-  color:white;
-  padding:8px;
-  border-radius:8px;
-  outline:none;
-}
-
 select{
   width:100%;
   padding:8px;
   border:none;
   border-radius:20px;
-  font-weight:bold;
   color:white;
-  cursor:pointer;
+  font-weight:bold;
 }
 
 .on{
@@ -135,40 +157,18 @@ select{
   background:#a61d24;
 }
 
-button{
-  background:#1f1f1f;
-  border:none;
-  color:white;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-button:hover{
-  background:#333;
-}
-
-.delete-btn{
-  background:#a61d24;
-}
-
-.delete-btn:hover{
-  background:#c62828;
-}
-
-.add-block-btn{
-  background:#0066ff;
-}
-
-.add-block-btn:hover{
-  background:#0052cc;
-}
-
 .actions{
   padding:15px;
   display:flex;
   justify-content:center;
   gap:10px;
+}
+
+button:disabled,
+input:disabled,
+select:disabled{
+  opacity:.45;
+  cursor:not-allowed;
 }
 
 </style>
@@ -179,46 +179,52 @@ button:hover{
 <h1>Controle de Conexão</h1>
 
 <p class="subtitle">
-Monitoramento de Números e Status dos Estagiários
+Monitoramento de números e status
 </p>
 
-<div class="top-actions">
+<div class="top">
 
-<button class="add-block-btn" onclick="addBlock()">
-+ Adicionar Bloco
-</button>
+  <input
+    type="password"
+    id="senhaInput"
+    placeholder="Digite a senha"
+  >
+
+  <button
+    class="unlock-btn"
+    onclick="liberarEdicao()"
+  >
+    Confirmar senha
+  </button>
+
+  <button
+    class="add-btn"
+    onclick="addBlock()"
+  >
+    + Adicionar Bloco
+  </button>
 
 </div>
 
-<div class="container" id="dashboard"></div>
+<p
+id="modo"
+style="
+text-align:center;
+margin-bottom:20px;
+color:#999;
+"
+>
+Modo visualização
+</p>
 
-<script type="module">
+<div
+class="container"
+id="dashboard"
+></div>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+<script>
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD9WYWXrzwgVAJV1XX-qLUZhgd2Iq0sn_s",
-  authDomain: "mkt3-26e08.firebaseapp.com",
-  projectId: "mkt3-26e08",
-  storageBucket: "mkt3-26e08.firebasestorage.app",
-  messagingSenderId: "783524116318",
-  appId: "1:783524116318:web:d0e3ac1b8d75e28f4e81cf",
-  measurementId: "G-BLXGS175QR"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-const dashboardRef = doc(db,"controle","dashboard");
+let podeEditar = false;
 
 let data = [
 
@@ -228,48 +234,75 @@ let data = [
     {
       numero:"1964",
       status:"ON",
-      observacao:"enviar 4"
+      observacao:"Ativo"
     },
     {
       numero:"2515",
       status:"OFF",
-      observacao:"caiu com 4 envios"
-    }
-  ]
-},
-
-{
-  name:"Equipe Manhã",
-  rows:[
-    {
-      numero:"7979",
-      status:"ON",
-      observacao:"ativo"
+      observacao:"Parado"
     }
   ]
 }
 
 ];
 
-async function saveData(){
+function liberarEdicao(){
 
-  await setDoc(dashboardRef,{
-    cards:data
-  });
+  const senha =
+  document.getElementById("senhaInput").value;
+
+  if(senha === "123456"){
+
+    podeEditar = true;
+
+    document.getElementById("modo").innerText =
+    "Modo edição liberado";
+
+    alert("Edição liberada");
+
+  }else{
+
+    podeEditar = false;
+
+    document.getElementById("modo").innerText =
+    "Modo visualização";
+
+    alert("Senha incorreta");
+
+  }
+
+  render();
+
+}
+
+function bloquear(){
+
+  if(!podeEditar){
+
+    alert("Você não tem permissão para editar");
+
+    return true;
+
+  }
+
+  return false;
 
 }
 
 function render(){
 
-  const dashboard = document.getElementById("dashboard");
+  const dashboard =
+  document.getElementById("dashboard");
 
   dashboard.innerHTML = "";
 
   data.forEach((card,cardIndex)=>{
 
-    const totalON = card.rows.filter(r => r.status === "ON").length;
+    const totalON =
+    card.rows.filter(r => r.status === "ON").length;
 
-    const div = document.createElement("div");
+    const div =
+    document.createElement("div");
 
     div.className = "card";
 
@@ -280,11 +313,12 @@ function render(){
       <input
         class="block-title"
         value="${card.name}"
+        ${!podeEditar ? "disabled" : ""}
         oninput="changeBlockName(${cardIndex},this.value)"
       >
 
       <div class="badge">
-        ${totalON} ON / ${card.rows.length} TOTAL
+        ${totalON} ON / ${card.rows.length}
       </div>
 
     </div>
@@ -306,63 +340,71 @@ function render(){
 
         <tbody>
 
-          ${card.rows.map((row,rowIndex)=>`
+        ${card.rows.map((row,rowIndex)=>`
 
-          <tr>
+        <tr>
 
-            <td>
+          <td>
 
-              <input
-                value="${row.numero}"
-                oninput="updateField(${cardIndex},${rowIndex},'numero',this.value)"
+            <input
+              value="${row.numero}"
+              ${!podeEditar ? "disabled" : ""}
+              oninput="updateField(${cardIndex},${rowIndex},'numero',this.value)"
+            >
+
+          </td>
+
+          <td>
+
+            <select
+              class="${row.status === 'ON' ? 'on' : 'off'}"
+              ${!podeEditar ? "disabled" : ""}
+              onchange="changeStatus(this,${cardIndex},${rowIndex})"
+            >
+
+              <option
+              value="ON"
+              ${row.status === 'ON' ? 'selected' : ''}
               >
+              ON
+              </option>
 
-            </td>
-
-            <td>
-
-              <select
-                class="${row.status === 'ON' ? 'on' : 'off'}"
-                onchange="changeStatus(this,${cardIndex},${rowIndex})"
+              <option
+              value="OFF"
+              ${row.status === 'OFF' ? 'selected' : ''}
               >
+              OFF
+              </option>
 
-                <option value="ON"
-                ${row.status === 'ON' ? 'selected' : ''}>
-                ON
-                </option>
+            </select>
 
-                <option value="OFF"
-                ${row.status === 'OFF' ? 'selected' : ''}>
-                OFF
-                </option>
+          </td>
 
-              </select>
+          <td>
 
-            </td>
+            <input
+              value="${row.observacao}"
+              ${!podeEditar ? "disabled" : ""}
+              oninput="updateField(${cardIndex},${rowIndex},'observacao',this.value)"
+            >
 
-            <td>
+          </td>
 
-              <input
-                value="${row.observacao}"
-                oninput="updateField(${cardIndex},${rowIndex},'observacao',this.value)"
-              >
+          <td>
 
-            </td>
+            <button
+              class="delete-btn"
+              ${!podeEditar ? "disabled" : ""}
+              onclick="removeRow(${cardIndex},${rowIndex})"
+            >
+            X
+            </button>
 
-            <td>
+          </td>
 
-              <button
-                class="delete-btn"
-                onclick="removeRow(${cardIndex},${rowIndex})"
-              >
-              X
-              </button>
+        </tr>
 
-            </td>
-
-          </tr>
-
-          `).join("")}
+        `).join("")}
 
         </tbody>
 
@@ -372,13 +414,17 @@ function render(){
 
     <div class="actions">
 
-      <button onclick="addRow(${cardIndex})">
+      <button
+        ${!podeEditar ? "disabled" : ""}
+        onclick="addRow(${cardIndex})"
+      >
       + Linha
       </button>
 
       <button
-      class="delete-btn"
-      onclick="removeBlock(${cardIndex})"
+        class="delete-btn"
+        ${!podeEditar ? "disabled" : ""}
+        onclick="removeBlock(${cardIndex})"
       >
       Excluir
       </button>
@@ -393,49 +439,35 @@ function render(){
 
 }
 
-window.updateField = function(card,row,field,value){
+function updateField(card,row,field,value){
+
+  if(bloquear()) return;
 
   data[card].rows[row][field] = value;
 
-  clearTimeout(window.saveTimer);
-
-  window.saveTimer = setTimeout(()=>{
-    saveData();
-  },500);
-
 }
 
-window.changeStatus = function(el,card,row){
+function changeStatus(el,card,row){
 
-  const value = el.value;
+  if(bloquear()) return;
 
-  data[card].rows[row].status = value;
-
-  if(value === "ON"){
-    el.className = "on";
-  }else{
-    el.className = "off";
-  }
+  data[card].rows[row].status = el.value;
 
   render();
 
-  saveData();
-
 }
 
-window.changeBlockName = function(card,value){
+function changeBlockName(card,value){
+
+  if(bloquear()) return;
 
   data[card].name = value;
 
-  clearTimeout(window.blockTimer);
-
-  window.blockTimer = setTimeout(()=>{
-    saveData();
-  },500);
-
 }
 
-window.addRow = function(card){
+function addRow(card){
+
+  if(bloquear()) return;
 
   data[card].rows.push({
     numero:"",
@@ -445,21 +477,21 @@ window.addRow = function(card){
 
   render();
 
-  saveData();
-
 }
 
-window.removeRow = function(card,row){
+function removeRow(card,row){
+
+  if(bloquear()) return;
 
   data[card].rows.splice(row,1);
 
   render();
 
-  saveData();
-
 }
 
-window.addBlock = function(){
+function addBlock(){
+
+  if(bloquear()) return;
 
   data.push({
 
@@ -477,39 +509,19 @@ window.addBlock = function(){
 
   render();
 
-  saveData();
-
 }
 
-window.removeBlock = function(card){
+function removeBlock(card){
+
+  if(bloquear()) return;
 
   data.splice(card,1);
 
   render();
 
-  saveData();
-
 }
 
-onSnapshot(dashboardRef,(snapshot)=>{
-
-  if(snapshot.exists()){
-
-    const firebaseData = snapshot.data();
-
-    data = firebaseData.cards || [];
-
-    render();
-
-  }else{
-
-    saveData();
-
-    render();
-
-  }
-
-});
+render();
 
 </script>
 
