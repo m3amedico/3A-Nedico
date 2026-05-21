@@ -3,16 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Controle de Conexão</title>
 
 <style>
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box}
 
 body{
   background:#050505;
@@ -25,18 +19,12 @@ h1{
   text-align:center;
   font-size:46px;
   margin-bottom:10px;
-
   background:linear-gradient(90deg,#00aaff,#cc00ff);
-
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
 }
 
-.subtitle{
-  text-align:center;
-  color:#999;
-  margin-bottom:30px;
-}
+.subtitle{text-align:center;color:#999;margin-bottom:25px}
 
 .top{
   display:flex;
@@ -44,16 +32,17 @@ h1{
   align-items:center;
   gap:10px;
   flex-wrap:wrap;
-  margin-bottom:30px;
+  margin-bottom:15px;
 }
 
-input{
+input,select{
   background:#121212;
   border:1px solid #222;
   color:white;
   padding:10px;
   border-radius:10px;
   outline:none;
+  width:100%;
 }
 
 button{
@@ -65,20 +54,16 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  background:#333;
-}
+button:hover{background:#333}
 
-.add-btn{
-  background:#0066ff;
-}
+.unlock-btn{background:#0f8b4c}
+.add-btn{background:#0066ff}
+.delete-btn{background:#a61d24}
 
-.delete-btn{
-  background:#a61d24;
-}
-
-.unlock-btn{
-  background:#0f8b4c;
+#modo{
+  text-align:center;
+  margin-bottom:25px;
+  color:#999;
 }
 
 .container{
@@ -100,6 +85,7 @@ button:hover{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
   padding:18px;
   border-bottom:1px solid #1f1f1f;
 }
@@ -111,10 +97,11 @@ button:hover{
 
 .badge{
   background:#1b1b1b;
-  padding:5px 10px;
+  padding:6px 10px;
   border-radius:12px;
   font-size:12px;
   color:#aaa;
+  white-space:nowrap;
 }
 
 .table-wrap{
@@ -141,21 +128,12 @@ td{
 }
 
 select{
-  width:100%;
-  padding:8px;
-  border:none;
   border-radius:20px;
-  color:white;
   font-weight:bold;
 }
 
-.on{
-  background:#0f8b4c;
-}
-
-.off{
-  background:#a61d24;
-}
+.on{background:#0f8b4c}
+.off{background:#a61d24}
 
 .actions{
   padding:15px;
@@ -170,303 +148,229 @@ select:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
-
 </style>
 </head>
 
 <body>
 
 <h1>Controle de Conexão</h1>
-
-<p class="subtitle">
-Monitoramento de números e status
-</p>
+<p class="subtitle">Monitoramento atualizado em tempo real para todos os PCs</p>
 
 <div class="top">
+  <input type="password" id="senhaInput" placeholder="Digite a senha" style="max-width:230px;">
 
-  <input
-    type="password"
-    id="senhaInput"
-    placeholder="Digite a senha"
-  >
-
-  <button
-    class="unlock-btn"
-    onclick="liberarEdicao()"
-  >
+  <button class="unlock-btn" onclick="liberarEdicao()">
     Confirmar senha
   </button>
 
-  <button
-    class="add-btn"
-    onclick="addBlock()"
-  >
+  <button class="add-btn" onclick="addBlock()">
     + Adicionar Bloco
   </button>
-
 </div>
 
-<p
-id="modo"
-style="
-text-align:center;
-margin-bottom:20px;
-color:#999;
-"
->
-Modo visualização
-</p>
+<p id="modo">Modo visualização</p>
 
-<div
-class="container"
-id="dashboard"
-></div>
+<div class="container" id="dashboard"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD9WYWXrzwgVAJV1XX-qLUZhgd2Iq0sn_s",
+  authDomain: "mkt3-26e08.firebaseapp.com",
+  projectId: "mkt3-26e08",
+  storageBucket: "mkt3-26e08.firebasestorage.app",
+  messagingSenderId: "783524116318",
+  appId: "1:783524116318:web:d0e3ac1b8d75e28f4e81cf",
+  measurementId: "G-BLXGS175QR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const dashboardRef = doc(db,"controle","dashboard");
 
 let podeEditar = false;
 
 let data = [
-
-{
-  name:"Geral",
-  rows:[
-    {
-      numero:"1964",
-      status:"ON",
-      observacao:"Ativo"
-    },
-    {
-      numero:"2515",
-      status:"OFF",
-      observacao:"Parado"
-    }
-  ]
-}
-
+  {
+    name:"Geral",
+    rows:[
+      {numero:"1964",status:"ON",observacao:"Ativo"},
+      {numero:"2515",status:"OFF",observacao:"Parado"}
+    ]
+  }
 ];
 
-function liberarEdicao(){
-
-  const senha =
-  document.getElementById("senhaInput").value;
+window.liberarEdicao = function(){
+  const senha = document.getElementById("senhaInput").value;
 
   if(senha === "123456"){
-
     podeEditar = true;
-
-    document.getElementById("modo").innerText =
-    "Modo edição liberado";
-
-    alert("Edição liberada");
-
+    document.getElementById("modo").innerText = "Modo edição liberado";
+    alert("Edição liberada.");
   }else{
-
     podeEditar = false;
-
-    document.getElementById("modo").innerText =
-    "Modo visualização";
-
-    alert("Senha incorreta");
-
+    document.getElementById("modo").innerText = "Modo visualização";
+    alert("Senha incorreta.");
   }
 
   render();
-
 }
 
 function bloquear(){
-
   if(!podeEditar){
-
-    alert("Você não tem permissão para editar");
-
+    alert("Você não tem permissão para editar.");
     return true;
-
   }
-
   return false;
+}
 
+async function salvarFirebase(){
+  await setDoc(dashboardRef,{cards:data});
 }
 
 function render(){
-
-  const dashboard =
-  document.getElementById("dashboard");
-
+  const dashboard = document.getElementById("dashboard");
   dashboard.innerHTML = "";
 
   data.forEach((card,cardIndex)=>{
+    const totalON = card.rows.filter(r => r.status === "ON").length;
 
-    const totalON =
-    card.rows.filter(r => r.status === "ON").length;
-
-    const div =
-    document.createElement("div");
-
+    const div = document.createElement("div");
     div.className = "card";
 
     div.innerHTML = `
+      <div class="header">
+        <input
+          class="block-title"
+          value="${card.name}"
+          ${!podeEditar ? "disabled" : ""}
+          oninput="changeBlockName(${cardIndex},this.value)"
+        >
 
-    <div class="header">
-
-      <input
-        class="block-title"
-        value="${card.name}"
-        ${!podeEditar ? "disabled" : ""}
-        oninput="changeBlockName(${cardIndex},this.value)"
-      >
-
-      <div class="badge">
-        ${totalON} ON / ${card.rows.length}
+        <div class="badge">
+          ${totalON} ON / ${card.rows.length}
+        </div>
       </div>
 
-    </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>NÚMERO</th>
+              <th>STATUS</th>
+              <th>OBS</th>
+              <th>AÇÃO</th>
+            </tr>
+          </thead>
 
-    <div class="table-wrap">
+          <tbody>
+            ${card.rows.map((row,rowIndex)=>`
+              <tr>
+                <td>
+                  <input
+                    value="${row.numero}"
+                    ${!podeEditar ? "disabled" : ""}
+                    oninput="updateField(${cardIndex},${rowIndex},'numero',this.value)"
+                  >
+                </td>
 
-      <table>
+                <td>
+                  <select
+                    class="${row.status === 'ON' ? 'on' : 'off'}"
+                    ${!podeEditar ? "disabled" : ""}
+                    onchange="changeStatus(this,${cardIndex},${rowIndex})"
+                  >
+                    <option value="ON" ${row.status === 'ON' ? 'selected' : ''}>ON</option>
+                    <option value="OFF" ${row.status === 'OFF' ? 'selected' : ''}>OFF</option>
+                  </select>
+                </td>
 
-        <thead>
+                <td>
+                  <input
+                    value="${row.observacao}"
+                    ${!podeEditar ? "disabled" : ""}
+                    oninput="updateField(${cardIndex},${rowIndex},'observacao',this.value)"
+                  >
+                </td>
 
-          <tr>
-            <th>NÚMERO</th>
-            <th>STATUS</th>
-            <th>OBS</th>
-            <th>AÇÃO</th>
-          </tr>
+                <td>
+                  <button
+                    class="delete-btn"
+                    ${!podeEditar ? "disabled" : ""}
+                    onclick="removeRow(${cardIndex},${rowIndex})"
+                  >
+                    X
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
 
-        </thead>
+      <div class="actions">
+        <button
+          ${!podeEditar ? "disabled" : ""}
+          onclick="addRow(${cardIndex})"
+        >
+          + Linha
+        </button>
 
-        <tbody>
-
-        ${card.rows.map((row,rowIndex)=>`
-
-        <tr>
-
-          <td>
-
-            <input
-              value="${row.numero}"
-              ${!podeEditar ? "disabled" : ""}
-              oninput="updateField(${cardIndex},${rowIndex},'numero',this.value)"
-            >
-
-          </td>
-
-          <td>
-
-            <select
-              class="${row.status === 'ON' ? 'on' : 'off'}"
-              ${!podeEditar ? "disabled" : ""}
-              onchange="changeStatus(this,${cardIndex},${rowIndex})"
-            >
-
-              <option
-              value="ON"
-              ${row.status === 'ON' ? 'selected' : ''}
-              >
-              ON
-              </option>
-
-              <option
-              value="OFF"
-              ${row.status === 'OFF' ? 'selected' : ''}
-              >
-              OFF
-              </option>
-
-            </select>
-
-          </td>
-
-          <td>
-
-            <input
-              value="${row.observacao}"
-              ${!podeEditar ? "disabled" : ""}
-              oninput="updateField(${cardIndex},${rowIndex},'observacao',this.value)"
-            >
-
-          </td>
-
-          <td>
-
-            <button
-              class="delete-btn"
-              ${!podeEditar ? "disabled" : ""}
-              onclick="removeRow(${cardIndex},${rowIndex})"
-            >
-            X
-            </button>
-
-          </td>
-
-        </tr>
-
-        `).join("")}
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <div class="actions">
-
-      <button
-        ${!podeEditar ? "disabled" : ""}
-        onclick="addRow(${cardIndex})"
-      >
-      + Linha
-      </button>
-
-      <button
-        class="delete-btn"
-        ${!podeEditar ? "disabled" : ""}
-        onclick="removeBlock(${cardIndex})"
-      >
-      Excluir
-      </button>
-
-    </div>
-
+        <button
+          class="delete-btn"
+          ${!podeEditar ? "disabled" : ""}
+          onclick="removeBlock(${cardIndex})"
+        >
+          Excluir
+        </button>
+      </div>
     `;
 
     dashboard.appendChild(div);
-
   });
-
 }
 
-function updateField(card,row,field,value){
-
+window.updateField = function(card,row,field,value){
   if(bloquear()) return;
 
   data[card].rows[row][field] = value;
 
+  clearTimeout(window.saveTimer);
+  window.saveTimer = setTimeout(()=>{
+    salvarFirebase();
+  },500);
 }
 
-function changeStatus(el,card,row){
-
+window.changeStatus = function(el,card,row){
   if(bloquear()) return;
 
   data[card].rows[row].status = el.value;
 
   render();
-
+  salvarFirebase();
 }
 
-function changeBlockName(card,value){
-
+window.changeBlockName = function(card,value){
   if(bloquear()) return;
 
   data[card].name = value;
 
+  clearTimeout(window.blockTimer);
+  window.blockTimer = setTimeout(()=>{
+    salvarFirebase();
+  },500);
 }
 
-function addRow(card){
-
+window.addRow = function(card){
   if(bloquear()) return;
 
   data[card].rows.push({
@@ -476,27 +380,23 @@ function addRow(card){
   });
 
   render();
-
+  salvarFirebase();
 }
 
-function removeRow(card,row){
-
+window.removeRow = function(card,row){
   if(bloquear()) return;
 
   data[card].rows.splice(row,1);
 
   render();
-
+  salvarFirebase();
 }
 
-function addBlock(){
-
+window.addBlock = function(){
   if(bloquear()) return;
 
   data.push({
-
     name:"Novo Bloco",
-
     rows:[
       {
         numero:"",
@@ -504,24 +404,30 @@ function addBlock(){
         observacao:""
       }
     ]
-
   });
 
   render();
-
+  salvarFirebase();
 }
 
-function removeBlock(card){
-
+window.removeBlock = function(card){
   if(bloquear()) return;
 
   data.splice(card,1);
 
   render();
-
+  salvarFirebase();
 }
 
-render();
+onSnapshot(dashboardRef,(snapshot)=>{
+  if(snapshot.exists()){
+    data = snapshot.data().cards || [];
+    render();
+  }else{
+    salvarFirebase();
+    render();
+  }
+});
 
 </script>
 
